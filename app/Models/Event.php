@@ -38,6 +38,15 @@ class Event extends Model
         'estado' => 'borrador',
     ];
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'id_administrador',
+            'id_usuario'
+        );
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(
@@ -54,7 +63,7 @@ class Event extends Model
             'id_evento'
         );
     }
-    
+
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('estado', 'publicado');
