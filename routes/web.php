@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
-    return 'EVENTIX - Sistema de Venta de Entradas para Eventos';
+    return Inertia::render('Home/Home');
 })->name('home');
