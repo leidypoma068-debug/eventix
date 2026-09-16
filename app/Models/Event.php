@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Event extends Model
 {
@@ -45,7 +46,15 @@ class Event extends Model
             'id_categoria'
         );
     }
-
+    public function ticket_types(): HasMany
+    {
+        return $this->hasMany(
+            TicketType::class,
+            'id_evento',
+            'id_evento'
+        );
+    }
+    
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('estado', 'publicado');
