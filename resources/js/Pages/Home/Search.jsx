@@ -1,5 +1,6 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import FilterCategories from './FilterCategories';
 
 export default function Search() {
     const {
@@ -142,6 +143,14 @@ export default function Search() {
                     {processing ? 'Enviando…' : 'Buscar'}
                 </button>
             </form>
+
+                        <FilterCategories
+                categories={categories}
+                value={data.category}
+                onChange={(category) => setData('category', category)}
+                disabled={processing}
+            />
+            
 
             {Object.keys(errors).length > 0 && (
                 <div role="alert" className="mt-3 text-sm text-red-600">
