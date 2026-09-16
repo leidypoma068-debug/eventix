@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { TicketIcon } from '@heroicons/react/24/outline';
+import Search from './Search';
 
 export default function Home() {
     return (
@@ -76,7 +77,9 @@ export default function Home() {
                             </div>
                         </div>
                     </section>
+                    <Search />
                 </main>
+
             </div>
         </>
     );
