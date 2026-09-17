@@ -1,6 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { TicketIcon } from '@heroicons/react/24/outline';
 import Search from './Search';
+import ItemList from './ItemList';
+
 
 export default function Home() {
     return (
@@ -78,6 +80,9 @@ export default function Home() {
                         </div>
                     </section>
                     <Search />
+
+                    <ItemList />
+                    
                 </main>
 
             </div>
