@@ -52,6 +52,14 @@ class EventSeeder extends Seeder
             ]
         );
 
+        if ($evento->imagen === null) {
+    $evento->update([
+        'imagen' => '/img/events/concierto-verano.jpg',
+    ]);
+
+    $this->command->info('Imagen del concierto asignada correctamente.');
+}
+
         $this->command->info(
             $evento->wasRecentlyCreated
                 ? 'Concierto de Verano creado correctamente.'
