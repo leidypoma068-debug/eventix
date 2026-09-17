@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use App\Http\Resources\EventResource;
+use App\Models\Event;
+
 
 Route::get('/', function (Request $request) {
     $filters = $request->validate([
@@ -30,14 +33,25 @@ Route::get('/', function (Request $request) {
         'location.max' => 'La ubicación admite hasta 120 caracteres.',
     ]);
 
+    $events = Event::published()
+    ->with('category')
+    ->withMin([
+        'ticket_types as precio_desde' => fn ($query) => $query->active(),
+    ], 'precio')
+    ->orderBy('fecha_evento')
+    ->orderBy('hora_inicio')
+    ->orderBy('id_evento')
+    ->paginate(8)
+    ->withQueryString();
+
     $categories = Category::active()
         ->orderBy('id_categoria')
         ->get(['id_categoria', 'nombre']);
 
     return Inertia::render('Home/Home', [
         'filters' => $filters,
-        'categories' => CategoryResource::collection($categories)
-            ->resolve($request),
+        'categories' => CategoryResource::collection($categories)->resolve($request),
         'locations' => [],
+        'events' => EventResource::collection($events),
     ]);
 })->name('home');
