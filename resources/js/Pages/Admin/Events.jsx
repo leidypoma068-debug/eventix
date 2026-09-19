@@ -40,6 +40,15 @@ const emptyForm = () => ({
 });
 
 export default function Events({ events = [], categories = [], staff = [], permissions = {} }) {
+    const scrollToSection = (id, block = 'start') => {
+        window.setTimeout(() => {
+            document.getElementById(id)?.scrollIntoView({
+                behavior: 'smooth',
+                block,
+            });
+        }, 80);
+    };
+
     const [editing, setEditing] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [search, setSearch] = useState('');
@@ -75,7 +84,7 @@ export default function Events({ events = [], categories = [], staff = [], permi
         form.setData(emptyForm());
         form.clearErrors();
         setShowForm(true);
-        setTimeout(() => document.getElementById('admin-event-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+        scrollToSection('admin-event-form');
     };
 
     const startEdit = (event) => {
@@ -98,7 +107,7 @@ export default function Events({ events = [], categories = [], staff = [], permi
         });
         form.clearErrors();
         setShowForm(true);
-        setTimeout(() => document.getElementById('admin-event-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+        scrollToSection('admin-event-form');
     };
 
     const closeForm = () => {
@@ -127,7 +136,10 @@ export default function Events({ events = [], categories = [], staff = [], permi
         form.post(url, {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: closeForm,
+            onSuccess: () => {
+                closeForm();
+                scrollToSection('event-list');
+            },
             onFinish: () => form.transform((data) => data),
         });
     };
@@ -180,6 +192,15 @@ export default function Events({ events = [], categories = [], staff = [], permi
         form.setData('tipos_entrada', next);
     };
 
+    const toggleCategoryCreator = () => {
+        const next = !showCategoryCreator;
+        setShowCategoryCreator(next);
+
+        if (next) {
+            scrollToSection('category-creator', 'center');
+        }
+    };
+
     const createCategory = (e) => {
         e.preventDefault();
         categoryForm.post('/admin/categorias', {
@@ -188,13 +209,16 @@ export default function Events({ events = [], categories = [], staff = [], permi
             onSuccess: () => {
                 categoryForm.reset();
                 setShowCategoryCreator(false);
+                window.setTimeout(() => {
+                    document.getElementById('event-category-select')?.focus();
+                }, 80);
             },
         });
     };
 
     const openTypeCreatorForEditing = () => {
         if (!editing) {
-            document.getElementById('create-ticket-types')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            scrollToSection('create-ticket-types', 'center');
             return;
         }
         setTypeEvent(editing);
@@ -208,6 +232,18 @@ export default function Events({ events = [], categories = [], staff = [], permi
                 <PageTitle
                     title="Gestión de eventos"
                     description="Administra eventos, publicación automática, categorías y tipos de entrada desde una sola pantalla."
+                    actions={
+                        permissions.create ? (
+                            <button
+                                type="button"
+                                onClick={startCreate}
+                                className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white shadow hover:bg-violet-700"
+                            >
+                                <PlusIcon className="h-5 w-5" />
+                                Crear evento
+                            </button>
+                        ) : null
+                    }
                 />
 
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -220,7 +256,7 @@ export default function Events({ events = [], categories = [], staff = [], permi
                     <p className="text-sm font-bold text-slate-500">{filtered.length} eventos registrados</p>
                 </div>
 
-                <div className="mt-5 grid gap-5 xl:grid-cols-2">
+                <div id="event-list" className="mt-5 grid scroll-mt-24 gap-5 xl:grid-cols-2">
                     {filtered.map((event) => {
                         const pct = event.capacity ? Math.round((event.sold / event.capacity) * 100) : 0;
                         return (
@@ -326,12 +362,12 @@ export default function Events({ events = [], categories = [], staff = [], permi
                             <Field label="Nombre"><input value={form.data.nombre} onChange={(e) => form.setData('nombre', e.target.value)} className="input" /></Field>
 
                             <Field label="Categoría">
-                                <select value={form.data.id_categoria} onChange={(e) => form.setData('id_categoria', e.target.value)} className="input">
+                                <select id="event-category-select" value={form.data.id_categoria} onChange={(e) => form.setData('id_categoria', e.target.value)} className="input">
                                     <option value="">Seleccionar</option>
                                     {categories.map((category) => <option key={category.id_categoria} value={category.id_categoria}>{category.nombre}</option>)}
                                 </select>
                                 {permissions.create && (
-                                    <button type="button" onClick={() => setShowCategoryCreator((v) => !v)} className="mt-2 inline-flex items-center gap-1 text-xs font-black text-violet-700">
+                                    <button type="button" onClick={toggleCategoryCreator} className="mt-2 inline-flex items-center gap-1 text-xs font-black text-violet-700">
                                         <PlusIcon className="h-4 w-4" />Crear tipo de categoría
                                     </button>
                                 )}
@@ -341,7 +377,7 @@ export default function Events({ events = [], categories = [], staff = [], permi
                             <Field label="Hora inicio"><input type="time" value={form.data.hora_inicio} onChange={(e) => form.setData('hora_inicio', e.target.value)} className="input" /></Field>
 
                             {showCategoryCreator && (
-                                <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 lg:col-span-4">
+                                <div id="category-creator" className="rounded-2xl border border-violet-200 bg-violet-50 p-4 lg:col-span-4 scroll-mt-28">
                                     <div className="flex items-center gap-2"><TagIcon className="h-5 w-5 text-violet-700" /><p className="font-black text-violet-900">Nueva categoría</p></div>
                                     <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1.5fr_auto]">
                                         <input placeholder="Nombre de categoría" value={categoryForm.data.nombre} onChange={(e) => categoryForm.setData('nombre', e.target.value)} className="input" />
