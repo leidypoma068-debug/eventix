@@ -58,7 +58,7 @@ export default function Search() {
     return (
         <section
             aria-label="Buscador de eventos"
-            className="relative z-20 mx-auto -mt-7 w-full max-w-6xl"
+            className="relative z-20 mx-auto mt-6 w-full max-w-6xl"
         >
             <form
                 onSubmit={submit}
