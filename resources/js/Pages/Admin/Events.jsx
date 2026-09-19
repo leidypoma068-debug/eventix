@@ -367,23 +367,29 @@ export default function Events({ events = [], categories = [], staff = [], permi
                                     value={form.data.estado}
                                     onChange={(e) => {
                                         const value = e.target.value;
-                                        form.setData('estado', value);
 
-                                        // Solo Próximamente necesita fecha/hora automática.
-                                        // Publicar ahora se guarda directamente como publicado.
-                                        if (value !== 'proximamente') {
-                                            form.setData('publicar_en', '');
-                                        }
+                                        form.setData((current) => ({
+                                            ...current,
+                                            estado: value,
+                                            publicar_en: value === 'proximamente'
+                                                ? current.publicar_en
+                                                : '',
+                                        }));
                                     }}
                                     className="input"
                                 >
                                     <option value="borrador">Borrador</option>
                                     <option value="proximamente">Próximamente</option>
-                                    <option value="publicado">Publicar ahora</option>
-                                    {editing?.status === 'cancelado' && <option value="cancelado">Cancelado</option>}
+                                    {permissions.publish && (
+                                        <option value="publicado">Publicar ahora</option>
+                                    )}
+                                    {editing?.status === 'cancelado' && (
+                                        <option value="cancelado">Cancelado</option>
+                                    )}
                                 </select>
+
                                 <p className="mt-1 text-[11px] text-slate-400">
-                                    Próximamente aparece sin compra hasta la fecha programada. Publicar ahora habilita la venta inmediatamente.
+                                    Borrador solo lo ve el personal administrativo. Próximamente aparece sin compra. Publicar ahora habilita la venta al crear el evento.
                                 </p>
                             </Field>
 
@@ -397,8 +403,10 @@ export default function Events({ events = [], categories = [], staff = [], permi
                                 />
                                 <p className="mt-1 text-[11px] text-slate-400">
                                     {form.data.estado === 'proximamente'
-                                        ? 'El evento aparecerá en “Próximamente” y pasará automáticamente a Publicado al llegar esta fecha y hora.'
-                                        : 'Selecciona “Próximamente” para programar cuándo se habilitará la venta.'}
+                                        ? 'Define cuándo dejará de ser Próximamente y pasará automáticamente a Publicado.'
+                                        : form.data.estado === 'publicado'
+                                            ? 'Publicar ahora no necesita fecha ni hora.'
+                                            : 'El borrador permanece visible solamente para administración.'}
                                 </p>
                             </Field>
 

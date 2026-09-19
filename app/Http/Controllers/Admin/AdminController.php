@@ -41,7 +41,12 @@ class AdminController extends Controller
 
     private function requirePermission(Request $request, string $permission): void
     {
-        abort_unless($request->user()?->hasAdminPermission($permission), 403);
+        $user = $request->user();
+
+        abort_unless(
+            $user && ($user->isAdministrator() || $user->hasAdminPermission($permission)),
+            403
+        );
     }
 
     private function requireMainAdmin(Request $request): void
@@ -193,7 +198,12 @@ class AdminController extends Controller
             'events'=>$events,
             'categories'=>Category::active()->orderBy('nombre')->get(['id_categoria','nombre']),
             'staff'=>User::whereIn('rol',['administrador','subadministrador'])->where('estado',true)->orderBy('nombre')->get()->map(fn($u)=>['id'=>(int)$u->id_usuario,'name'=>trim($u->nombre.' '.$u->apellido)]),
-            'permissions'=>['create'=>$request->user()->hasAdminPermission('events.create'),'edit'=>$request->user()->hasAdminPermission('events.edit'),'publish'=>$request->user()->hasAdminPermission('events.publish'),'permanentDelete'=>$request->user()->isAdministrator()],
+            'permissions'=>[
+                'create'=>$request->user()->isAdministrator() || $request->user()->hasAdminPermission('events.create'),
+                'edit'=>$request->user()->isAdministrator() || $request->user()->hasAdminPermission('events.edit'),
+                'publish'=>$request->user()->isAdministrator() || $request->user()->hasAdminPermission('events.publish'),
+                'permanentDelete'=>$request->user()->isAdministrator(),
+            ],
         ]);
     }
 
@@ -244,7 +254,10 @@ class AdminController extends Controller
 
     private function normalizePublicationData(Request $request, array $data, ?Event $event = null): array
     {
-        if (!$request->user()->hasAdminPermission('events.publish')) {
+        $canPublish = $request->user()->isAdministrator()
+            || $request->user()->hasAdminPermission('events.publish');
+
+        if (!$canPublish) {
             $data['estado'] = $event?->estado ?? 'borrador';
             $data['publicar_en'] = $event?->publicar_en;
             return $data;
