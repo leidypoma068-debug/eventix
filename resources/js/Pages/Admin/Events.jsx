@@ -137,18 +137,6 @@ export default function Events({ events = [], categories = [], staff = [], permi
         persistEvent();
     };
 
-    const publishFormNow = () => {
-        if (!permissions.publish || form.processing) return;
-
-        const label = editing ? `“${editing.title}”` : 'este evento';
-
-        if (!window.confirm(`¿Publicar ${label} ahora? Quedará visible para los clientes y se habilitará la compra.`)) {
-            return;
-        }
-
-        persistEvent('publicado');
-    };
-
     const publishExistingNow = (event) => {
         if (!window.confirm(`¿Publicar “${event.title}” ahora?`)) return;
 
@@ -376,11 +364,13 @@ export default function Events({ events = [], categories = [], staff = [], permi
 
                             <Field label="Estado">
                                 <select
-                                    value={form.data.estado === 'publicado' ? 'borrador' : form.data.estado}
+                                    value={form.data.estado}
                                     onChange={(e) => {
                                         const value = e.target.value;
                                         form.setData('estado', value);
 
+                                        // Solo Próximamente necesita fecha/hora automática.
+                                        // Publicar ahora se guarda directamente como publicado.
                                         if (value !== 'proximamente') {
                                             form.setData('publicar_en', '');
                                         }
@@ -389,10 +379,11 @@ export default function Events({ events = [], categories = [], staff = [], permi
                                 >
                                     <option value="borrador">Borrador</option>
                                     <option value="proximamente">Próximamente</option>
+                                    <option value="publicado">Publicar ahora</option>
                                     {editing?.status === 'cancelado' && <option value="cancelado">Cancelado</option>}
                                 </select>
                                 <p className="mt-1 text-[11px] text-slate-400">
-                                    Para publicar de inmediato usa el botón verde “Publicar ahora”.
+                                    Próximamente aparece sin compra hasta la fecha programada. Publicar ahora habilita la venta inmediatamente.
                                 </p>
                             </Field>
 
@@ -490,26 +481,13 @@ export default function Events({ events = [], categories = [], staff = [], permi
                             <div className="lg:col-span-4">
                                 {Object.values(form.errors).map((error, index) => <p key={index} className="mb-1 text-sm font-bold text-red-600">{error}</p>)}
 
-                                <div className="mt-2 flex flex-wrap gap-3">
-                                    <button
-                                        type="submit"
-                                        disabled={form.processing}
-                                        className="rounded-xl bg-violet-600 px-6 py-3 font-black text-white shadow hover:bg-violet-700 disabled:opacity-50"
-                                    >
-                                        {form.processing ? 'Guardando...' : editing ? 'Guardar cambios' : 'Crear evento'}
-                                    </button>
-
-                                    {permissions.publish && editing?.status !== 'cancelado' && (
-                                        <button
-                                            type="button"
-                                            onClick={publishFormNow}
-                                            disabled={form.processing}
-                                            className="rounded-xl bg-emerald-600 px-6 py-3 font-black text-white shadow hover:bg-emerald-700 disabled:opacity-50"
-                                        >
-                                            Publicar ahora
-                                        </button>
-                                    )}
-                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={form.processing}
+                                    className="mt-2 rounded-xl bg-violet-600 px-6 py-3 font-black text-white shadow hover:bg-violet-700 disabled:opacity-50"
+                                >
+                                    {form.processing ? 'Guardando...' : editing ? 'Guardar cambios' : 'Crear evento'}
+                                </button>
                             </div>
                         </form>
                     </Card>
