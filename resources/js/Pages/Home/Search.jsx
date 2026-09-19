@@ -58,15 +58,15 @@ export default function Search() {
     return (
         <section
             aria-label="Buscador de eventos"
-            className="relative z-20 mx-auto mt-6 w-full max-w-6xl"
+            className="relative z-20 mx-auto mt-6 w-full max-w-7xl px-2 sm:px-4"
         >
             <form
                 onSubmit={submit}
                 role="search"
                 className="rounded-[24px] border border-violet-100 bg-white/95 p-3 shadow-[0_18px_50px_rgba(91,33,182,0.12)] backdrop-blur sm:p-4"
             >
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
-                    <div className="relative xl:col-span-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(280px,2fr)_minmax(170px,1fr)_minmax(220px,1.25fr)_minmax(220px,1.25fr)_minmax(190px,1fr)]">
+                    <div className="relative min-w-0">
                         <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-violet-600" />
                         <input
                             type="search"
@@ -79,7 +79,7 @@ export default function Search() {
                         />
                     </div>
 
-                    <div className="relative xl:col-span-2">
+                    <div className="relative min-w-0">
                         <CalendarDaysIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-violet-600" />
                         <input
                             type="date"
@@ -91,13 +91,13 @@ export default function Search() {
                         />
                     </div>
 
-                    <div className="relative xl:col-span-2">
+                    <div className="relative min-w-0">
                         <TicketIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-violet-600" />
                         <select
                             name="category"
                             value={data.category}
                             onChange={(e) => setData('category', e.target.value)}
-                            className={`${fieldClass} appearance-none`}
+                            className={`${fieldClass} appearance-none pr-10`}
                             aria-label="Categoría"
                         >
                             <option value="">Todas las categorías</option>
@@ -109,13 +109,13 @@ export default function Search() {
                         </select>
                     </div>
 
-                    <div className="relative xl:col-span-2">
+                    <div className="relative min-w-0">
                         <MapPinIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-violet-600" />
                         <select
                             name="location"
                             value={data.location}
                             onChange={(e) => setData('location', e.target.value)}
-                            className={`${fieldClass} appearance-none`}
+                            className={`${fieldClass} appearance-none pr-10`}
                             aria-label="Ubicación"
                         >
                             <option value="">Todas las ubicaciones</option>
@@ -130,7 +130,7 @@ export default function Search() {
                     <button
                         type="submit"
                         disabled={processing}
-                        className="flex h-16 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-sm font-black text-white shadow-lg shadow-violet-200 transition hover:-translate-y-0.5 hover:from-violet-700 hover:to-indigo-700 disabled:cursor-wait disabled:opacity-60 xl:col-span-2"
+                        className="flex h-16 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-sm font-black text-white shadow-lg shadow-violet-200 transition hover:-translate-y-0.5 hover:from-violet-700 hover:to-indigo-700 disabled:cursor-wait disabled:opacity-60 "
                     >
                         <MagnifyingGlassIcon className="h-5 w-5" />
                         {processing ? 'Buscando...' : 'Buscar eventos'}
