@@ -13,7 +13,7 @@ class PublishScheduledEvents
         // Respaldo para entornos locales: si el scheduler no está corriendo,
         // la primera petición después de la hora también publica el evento.
         Event::query()
-            ->where('estado', 'programado')
+            ->whereIn('estado', ['programado', 'proximamente'])
             ->whereNull('eliminado_en')
             ->whereNotNull('publicar_en')
             ->where('publicar_en', '<=', now())

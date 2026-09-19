@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import {
     CalendarDaysIcon,
     MapPinIcon,
@@ -18,11 +19,8 @@ function UpcomingCard({ event }) {
         : 'Fecha por confirmar';
 
     return (
-        <Link
-            href={`/eventos/${event.id}`}
-            className="group flex min-w-[290px] flex-1 overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm transition hover:-translate-y-1 hover:border-violet-200 hover:shadow-lg"
-        >
-            <div className="h-28 w-32 shrink-0 overflow-hidden bg-violet-50">
+        <article className="group flex min-w-[290px] flex-1 overflow-hidden rounded-2xl border border-amber-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            <div className="relative h-28 w-32 shrink-0 overflow-hidden bg-violet-50">
                 {event.image ? (
                     <img
                         src={event.image}
@@ -34,6 +32,10 @@ function UpcomingCard({ event }) {
                         <TicketIcon className="h-10 w-10 -rotate-12 text-violet-400" />
                     </div>
                 )}
+
+                <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2 py-1 text-[10px] font-black text-white shadow">
+                    PRÓXIMAMENTE
+                </span>
             </div>
 
             <div className="min-w-0 flex-1 p-4">
@@ -50,8 +52,12 @@ function UpcomingCard({ event }) {
                     <MapPinIcon className="h-4 w-4 shrink-0 text-violet-600" />
                     <span className="truncate">{event.location}</span>
                 </p>
+
+                <p className="mt-2 text-[11px] font-black text-amber-600">
+                    Entradas disponibles desde {event.publishLabel || 'la fecha programada'}
+                </p>
             </div>
-        </Link>
+        </article>
     );
 }
 
@@ -89,13 +95,36 @@ export default function ItemList() {
     const { events } = usePage().props;
     const { data = [], meta = {}, links = {} } = events ?? {};
 
-    /*
-     * Por ahora usamos los primeros cuatro resultados como destacados.
-     * Cuando quieras, después podemos cambiar esto para que el administrador
-     * marque manualmente cuáles son destacados desde su panel.
-     */
+    const [upcomingEvents, setUpcomingEvents] = useState([]);
+    const [loadingUpcoming, setLoadingUpcoming] = useState(true);
+
+    // Los eventos publicados continúan viniendo del catálogo normal.
     const featuredEvents = data.slice(0, 4);
-    const upcomingEvents = data.slice(4, 8);
+
+    useEffect(() => {
+        let active = true;
+
+        fetch('/eventos-proximos', {
+            headers: { Accept: 'application/json' },
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error('No se pudieron cargar los próximos eventos.');
+                return response.json();
+            })
+            .then((payload) => {
+                if (active) setUpcomingEvents(payload.events ?? []);
+            })
+            .catch(() => {
+                if (active) setUpcomingEvents([]);
+            })
+            .finally(() => {
+                if (active) setLoadingUpcoming(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
 
     return (
         <div className="mt-9">
@@ -137,7 +166,11 @@ export default function ItemList() {
                     />
                 </div>
 
-                {upcomingEvents.length > 0 ? (
+                {loadingUpcoming ? (
+                    <div className="rounded-3xl border border-violet-100 bg-white px-6 py-7 text-sm font-bold text-slate-500">
+                        Cargando próximos eventos...
+                    </div>
+                ) : upcomingEvents.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                         {upcomingEvents.map((event) => (
                             <UpcomingCard key={event.id} event={event} />
@@ -149,7 +182,7 @@ export default function ItemList() {
                             Muy pronto habrá más eventos ✨
                         </p>
                         <p className="mt-1 text-sm text-slate-500">
-                            Los próximos eventos que publiques aparecerán en esta sección.
+                            Cuando el administrador marque un evento como “Próximamente”, aparecerá aquí.
                         </p>
                     </div>
                 )}
