@@ -97,3 +97,5 @@ require __DIR__.'/password_client.php';
 require __DIR__.'/auth.php';
 
 require_once __DIR__.'/upcoming_events.php';
+
+require_once __DIR__.'/experience_extra.php';
