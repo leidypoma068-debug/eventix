@@ -28,6 +28,7 @@
         "alpinejs": "^3.12.3",
         "flatpickr": "^4.6.13",
         "fslightbox-react": "^1.7.6",
+        "jsqr": "^1.4.0",
         "lodash": "^4.17.21",
         "lodash.debounce": "^4.0.8",
         "react-countdown": "^2.3.5",
