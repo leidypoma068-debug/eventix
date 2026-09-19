@@ -9,6 +9,7 @@ import {
     ChevronRightIcon,
     ArrowRightOnRectangleIcon,
     ArrowUturnLeftIcon,
+    ReceiptPercentIcon,
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 
@@ -57,6 +58,7 @@ export default function ClientLayout({ children }) {
         { name: 'Inicio', href: '/', icon: HomeIcon },
         { name: 'Explorar eventos', href: '/#eventos', icon: MagnifyingGlassIcon },
         { name: 'Mis entradas', href: '/mis-entradas', icon: TicketIcon },
+        { name: 'Mis compras', href: '/mis-compras', icon: ReceiptPercentIcon },
         { name: 'Favoritos', href: user ? '/favoritos' : '/login', icon: HeartIcon },
         { name: 'Reembolsos', href: user ? '/mis-reembolsos' : '/login', icon: ArrowUturnLeftIcon },
     ];
@@ -68,6 +70,7 @@ export default function ClientLayout({ children }) {
         if (item.name === 'Inicio') return currentPath === '/';
         if (item.name === 'Explorar eventos') return false;
         if (item.name === 'Mis entradas') return currentPath.startsWith('/mis-entradas');
+        if (item.name === 'Mis compras') return currentPath.startsWith('/mis-compras');
         if (item.name === 'Favoritos') return currentPath.startsWith('/favoritos');
         if (item.name === 'Reembolsos') return currentPath.startsWith('/mis-reembolsos');
         return false;
