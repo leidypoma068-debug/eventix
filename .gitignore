@@ -17,3 +17,4 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode/eventix_backup_antes_entrega.sql
+/eventix_backup_antes_entrega.sql
