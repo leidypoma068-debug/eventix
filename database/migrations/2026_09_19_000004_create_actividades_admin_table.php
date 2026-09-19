@@ -1,0 +1,3 @@
+<?php
+use Illuminate\Database\Migrations\Migration; use Illuminate\Database\Schema\Blueprint; use Illuminate\Support\Facades\Schema;
+return new class extends Migration { public function up(): void { if(!Schema::hasTable('actividades_admin')) Schema::create('actividades_admin',function(Blueprint $t){$t->id('id_actividad');$t->foreignId('id_usuario')->nullable()->constrained('usuarios','id_usuario')->nullOnDelete();$t->string('accion',120);$t->string('entidad_tipo',80)->nullable();$t->unsignedBigInteger('entidad_id')->nullable();$t->json('detalle')->nullable();$t->string('ip',64)->nullable();$t->timestamps();}); } public function down(): void {Schema::dropIfExists('actividades_admin');} };
