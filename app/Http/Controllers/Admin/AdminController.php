@@ -229,8 +229,8 @@ class AdminController extends Controller
             'ubicacion'=>['required','string','max:255'],
             'aforo_total'=>['required','integer','min:1'],
             'porcentaje_servicio'=>['required','numeric','min:0','max:100'],
-            'estado'=>['required',Rule::in(['borrador','programado','publicado','cancelado'])],
-            'publicar_en'=>['nullable','required_if:estado,programado','date'],
+            'estado'=>['required',Rule::in(['borrador','proximamente','programado','publicado','cancelado'])],
+            'publicar_en'=>['nullable','required_if:estado,programado','required_if:estado,proximamente','date'],
             'id_publicador'=>['nullable','exists:usuarios,id_usuario'],
             'imagen_archivo'=>['nullable','image','mimes:jpg,jpeg,png,webp','max:4096'],
             'tipos_entrada'=>['nullable','array'],
@@ -250,7 +250,7 @@ class AdminController extends Controller
             return $data;
         }
 
-        if ($data['estado'] === 'programado') {
+        if (in_array($data['estado'], ['programado', 'proximamente'], true)) {
             $publishAt = \Carbon\Carbon::parse($data['publicar_en']);
 
             if ($publishAt->lessThanOrEqualTo(now())) {
@@ -258,6 +258,8 @@ class AdminController extends Controller
                 $data['fecha_publicacion'] = now();
                 $data['publicar_en'] = null;
             } else {
+                // "programado" permanece oculto.
+                // "proximamente" se muestra en la portada, pero todavía no permite comprar.
                 $data['fecha_publicacion'] = null;
             }
         } elseif ($data['estado'] === 'publicado') {
@@ -325,9 +327,13 @@ class AdminController extends Controller
             'porcentaje_servicio' => (float) $event->porcentaje_servicio,
         ]);
 
-        return back()->with('success', $event->estado === 'programado'
-            ? 'Evento creado y programado. Se publicará automáticamente en la fecha indicada.'
-            : 'Evento creado correctamente.');
+        $message = match ($event->estado) {
+            'proximamente' => 'Evento creado como Próximamente. Ya aparece en la portada y se publicará automáticamente en la fecha indicada.',
+            'programado' => 'Evento creado y programado. Permanecerá oculto hasta la fecha de publicación.',
+            default => 'Evento creado correctamente.',
+        };
+
+        return back()->with('success', $message);
     }
 
     public function updateEvent(Request $request, Event $event)
@@ -366,9 +372,13 @@ class AdminController extends Controller
             'porcentaje_servicio' => (float) $event->porcentaje_servicio,
         ]);
 
-        return back()->with('success', $event->estado === 'programado'
-            ? 'Evento actualizado. La publicación automática quedó programada.'
-            : 'Evento actualizado correctamente.');
+        $message = match ($event->estado) {
+            'proximamente' => 'Evento actualizado como Próximamente. Seguirá visible en la portada hasta publicarse automáticamente.',
+            'programado' => 'Evento actualizado. Permanecerá oculto hasta la publicación automática.',
+            default => 'Evento actualizado correctamente.',
+        };
+
+        return back()->with('success', $message);
     }
 
     public function deleteEvent(Request $request, Event $event)
@@ -504,10 +514,26 @@ class AdminController extends Controller
 
     public function publishEvent(Request $request, Event $event)
     {
-        $this->requirePermission($request,'events.publish');
-        $event->update(['estado'=>'publicado','fecha_publicacion'=>now(),'publicar_en'=>null,'id_publicador'=>$request->user()->id_usuario]);
-        $this->log($request,'Evento publicado','evento',$event->id_evento);
-        return back()->with('success','Evento publicado.');
+        $this->requirePermission($request, 'events.publish');
+
+        abort_if($event->eliminado_en !== null, 404);
+
+        if ($event->estado === 'cancelado') {
+            return redirect()->route('admin.events')
+                ->withErrors(['estado' => 'Un evento cancelado no puede publicarse directamente.']);
+        }
+
+        $event->update([
+            'estado' => 'publicado',
+            'fecha_publicacion' => now(),
+            'publicar_en' => null,
+            'id_publicador' => $request->user()->id_usuario,
+        ]);
+
+        $this->log($request, 'Evento publicado ahora', 'evento', $event->id_evento);
+
+        return redirect()->route('admin.events')
+            ->with('success', 'Evento publicado correctamente. Ya está visible para los clientes.');
     }
 
     public function storeType(Request $request, Event $event)

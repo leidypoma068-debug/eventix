@@ -90,7 +90,7 @@ export default function Events({ events = [], categories = [], staff = [], permi
             ubicacion: event.location,
             aforo_total: event.capacity,
             porcentaje_servicio: event.serviceFeePercent ?? 5,
-            estado: event.status,
+            estado: event.status === 'programado' ? 'proximamente' : event.status,
             publicar_en: event.publishAt || '',
             id_publicador: event.publisherId || '',
             imagen_archivo: null,
@@ -109,21 +109,57 @@ export default function Events({ events = [], categories = [], staff = [], permi
         form.clearErrors();
     };
 
+    const persistEvent = (statusOverride = null) => {
+        form.transform((data) => ({
+            ...data,
+            ...(statusOverride
+                ? {
+                    estado: statusOverride,
+                    publicar_en: statusOverride === 'publicado' ? '' : data.publicar_en,
+                }
+                : {}),
+        }));
+
+        const url = editing
+            ? `/admin/eventos/${editing.id}/actualizar`
+            : '/admin/eventos';
+
+        form.post(url, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: closeForm,
+            onFinish: () => form.transform((data) => data),
+        });
+    };
+
     const submit = (e) => {
         e.preventDefault();
-        if (editing) {
-            form.post(`/admin/eventos/${editing.id}/actualizar`, {
-                forceFormData: true,
-                preserveScroll: true,
-                onSuccess: closeForm,
-            });
-        } else {
-            form.post('/admin/eventos', {
-                forceFormData: true,
-                preserveScroll: true,
-                onSuccess: closeForm,
-            });
+        persistEvent();
+    };
+
+    const publishFormNow = () => {
+        if (!permissions.publish || form.processing) return;
+
+        const label = editing ? `“${editing.title}”` : 'este evento';
+
+        if (!window.confirm(`¿Publicar ${label} ahora? Quedará visible para los clientes y se habilitará la compra.`)) {
+            return;
         }
+
+        persistEvent('publicado');
+    };
+
+    const publishExistingNow = (event) => {
+        if (!window.confirm(`¿Publicar “${event.title}” ahora?`)) return;
+
+        router.post(
+            `/admin/eventos/${event.id}/publicar`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => router.reload({ only: ['events'] }),
+            }
+        );
     };
 
     const cancelEvent = (event) => {
@@ -239,7 +275,7 @@ export default function Events({ events = [], categories = [], staff = [], permi
                                                     </button>
                                                 )}
                                                 {permissions.publish && event.status !== 'publicado' && event.status !== 'cancelado' && (
-                                                    <button type="button" onClick={() => router.post(`/admin/eventos/${event.id}/publicar`, {}, { preserveScroll: true })} className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-700">
+                                                    <button type="button" onClick={() => publishExistingNow(event)} className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-700">
                                                         Publicar ahora
                                                     </button>
                                                 )}
@@ -340,19 +376,24 @@ export default function Events({ events = [], categories = [], staff = [], permi
 
                             <Field label="Estado">
                                 <select
-                                    value={form.data.estado}
+                                    value={form.data.estado === 'publicado' ? 'borrador' : form.data.estado}
                                     onChange={(e) => {
                                         const value = e.target.value;
                                         form.setData('estado', value);
-                                        if (value !== 'programado') form.setData('publicar_en', '');
+
+                                        if (value !== 'proximamente') {
+                                            form.setData('publicar_en', '');
+                                        }
                                     }}
                                     className="input"
                                 >
                                     <option value="borrador">Borrador</option>
-                                    <option value="programado">Programar publicación</option>
-                                    <option value="publicado">Publicar ahora</option>
+                                    <option value="proximamente">Próximamente</option>
                                     {editing?.status === 'cancelado' && <option value="cancelado">Cancelado</option>}
                                 </select>
+                                <p className="mt-1 text-[11px] text-slate-400">
+                                    Para publicar de inmediato usa el botón verde “Publicar ahora”.
+                                </p>
                             </Field>
 
                             <Field label="Publicar automáticamente">
@@ -360,11 +401,13 @@ export default function Events({ events = [], categories = [], staff = [], permi
                                     type="datetime-local"
                                     value={form.data.publicar_en}
                                     onChange={(e) => form.setData('publicar_en', e.target.value)}
-                                    disabled={form.data.estado !== 'programado'}
+                                    disabled={form.data.estado !== 'proximamente'}
                                     className="input disabled:bg-slate-100 disabled:text-slate-400"
                                 />
                                 <p className="mt-1 text-[11px] text-slate-400">
-                                    {form.data.estado === 'programado' ? 'Se publicará sola al llegar esta fecha y hora.' : 'Selecciona “Programar publicación” para activar este campo.'}
+                                    {form.data.estado === 'proximamente'
+                                        ? 'El evento aparecerá en “Próximamente” y pasará automáticamente a Publicado al llegar esta fecha y hora.'
+                                        : 'Selecciona “Próximamente” para programar cuándo se habilitará la venta.'}
                                 </p>
                             </Field>
 
@@ -446,9 +489,27 @@ export default function Events({ events = [], categories = [], staff = [], permi
 
                             <div className="lg:col-span-4">
                                 {Object.values(form.errors).map((error, index) => <p key={index} className="mb-1 text-sm font-bold text-red-600">{error}</p>)}
-                                <button disabled={form.processing} className="mt-2 rounded-xl bg-violet-600 px-6 py-3 font-black text-white shadow hover:bg-violet-700 disabled:opacity-50">
-                                    {form.processing ? 'Guardando...' : editing ? 'Guardar cambios' : 'Crear evento'}
-                                </button>
+
+                                <div className="mt-2 flex flex-wrap gap-3">
+                                    <button
+                                        type="submit"
+                                        disabled={form.processing}
+                                        className="rounded-xl bg-violet-600 px-6 py-3 font-black text-white shadow hover:bg-violet-700 disabled:opacity-50"
+                                    >
+                                        {form.processing ? 'Guardando...' : editing ? 'Guardar cambios' : 'Crear evento'}
+                                    </button>
+
+                                    {permissions.publish && editing?.status !== 'cancelado' && (
+                                        <button
+                                            type="button"
+                                            onClick={publishFormNow}
+                                            disabled={form.processing}
+                                            className="rounded-xl bg-emerald-600 px-6 py-3 font-black text-white shadow hover:bg-emerald-700 disabled:opacity-50"
+                                        >
+                                            Publicar ahora
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </form>
                     </Card>
@@ -485,5 +546,9 @@ function Field({ label, children, className = '' }) {
 }
 
 function tone(status) {
-    return status === 'publicado' ? 'green' : status === 'programado' ? 'blue' : status === 'cancelado' ? 'red' : 'amber';
+    if (status === 'publicado') return 'green';
+    if (status === 'proximamente') return 'violet';
+    if (status === 'programado') return 'blue';
+    if (status === 'cancelado') return 'red';
+    return 'amber';
 }
