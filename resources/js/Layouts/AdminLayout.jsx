@@ -18,7 +18,7 @@ import {
     ChevronRightIcon,
     ArrowRightOnRectangleIcon,
     ClipboardDocumentCheckIcon,
-    ClockIcon,
+    ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 
 const allItems = [
@@ -29,11 +29,11 @@ const allItems = [
     { name: 'Informe de ventas', href: '/admin/ventas', icon: BanknotesIcon, permission: 'sales.view' },
     { name: 'Validación QR', href: '/admin/validar', icon: QrCodeIcon, permission: 'qr.validate' },
     { name: 'Reportes', href: '/admin/reportes', icon: DocumentChartBarIcon, permission: 'reports.view' },
-    { name: 'Historial', href: '/admin/historial', icon: ClockIcon, permission: 'reports.view' },
     { name: 'Analítica', href: '/admin/analitica', icon: ChartBarIcon, permission: 'analytics.view' },
     { name: 'Clientes', href: '/admin/clientes', icon: UsersIcon, permission: 'clients.view' },
     { name: 'Empleados', href: '/admin/empleados', icon: UserGroupIcon, adminOnly: true },
     { name: 'Reembolsos', href: '/admin/reembolsos', icon: ArrowUturnLeftIcon, adminOnly: true },
+    { name: 'Auditoría', href: '/admin/auditoria', icon: ShieldCheckIcon, adminOnly: true },
     { name: 'Mi perfil', href: '/admin/perfil', icon: UserCircleIcon },
 ];
 
@@ -51,7 +51,14 @@ export default function AdminLayout({ children }) {
     const can = (permission) => isMainAdmin || permissions.includes('*') || !permission || permissions.includes(permission);
 
     const menu = useMemo(
-        () => allItems.filter((item) => (!item.adminOnly || isMainAdmin) && can(item.permission)),
+        () =>
+            allItems
+                .map((item) =>
+                    item.name === 'Dashboard' && !isMainAdmin
+                        ? { ...item, name: 'Mi panel', href: '/admin/mi-panel' }
+                        : item
+                )
+                .filter((item) => (!item.adminOnly || isMainAdmin) && can(item.permission)),
         [isMainAdmin, permissions]
     );
 
@@ -68,7 +75,7 @@ export default function AdminLayout({ children }) {
         <div className="min-h-screen bg-slate-50">
             <header className="fixed inset-x-0 top-0 z-50 h-20 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
                 <div className="flex h-full items-center justify-between gap-4 px-5 sm:px-7">
-                    <Link href="/admin" className="flex shrink-0 items-center gap-3">
+                    <Link href={isMainAdmin ? "/admin" : "/admin/mi-panel"} className="flex shrink-0 items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 text-white shadow-lg">
                             <TicketIcon className="h-7 w-7 -rotate-12" />
                         </div>
